@@ -8,3 +8,4 @@ pandas
 loguru
 openai
 gradio
+flask
