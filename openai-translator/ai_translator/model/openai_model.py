@@ -1,5 +1,6 @@
 import requests
 import simplejson
+import traceback
 import time
 import os
 import openai
@@ -8,10 +9,14 @@ from model import Model
 from utils import LOG
 from openai import OpenAI
 
+
 class OpenAIModel(Model):
     def __init__(self, model: str, api_key: str):
         self.model = model
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        if os.getenv("OPENAI_API_KEY"):
+            self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        else:
+            self.client = OpenAI(api_key=api_key)
 
     def make_request(self, prompt):
         attempts = 0
@@ -43,12 +48,14 @@ class OpenAIModel(Model):
                 else:
                     raise Exception("Rate limit reached. Maximum attempts exceeded.")
             except openai.APIConnectionError as e:
-                print("The server could not be reached")
-                print(e.__cause__)  # an underlying Exception, likely raised within httpx.            except requests.exceptions.Timeout as e:
+                LOG.error("The server could not be reached")
+                LOG.error(
+                    e.__cause__)  # an underlying Exception, likely raised within httpx.            except requests.exceptions.Timeout as e:
             except openai.APIStatusError as e:
-                print("Another non-200-range status code was received")
-                print(e.status_code)
-                print(e.response)
+                LOG.error("Another non-200-range status code was received")
+                LOG.error(e.status_code)
+                LOG.error(e.response)
             except Exception as e:
+                LOG.error(traceback.format_exc())
                 raise Exception(f"发生了未知错误：{e}")
         return "", False
