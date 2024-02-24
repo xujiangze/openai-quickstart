@@ -1,12 +1,15 @@
 import pandas as pd
+import traceback
 from enum import Enum, auto
 from PIL import Image as PILImage
 from utils import LOG
+
 
 class ContentType(Enum):
     TEXT = auto()
     TABLE = auto()
     IMAGE = auto()
+
 
 class Content:
     def __init__(self, content_type, original, translation=None):
@@ -32,14 +35,29 @@ class Content:
 
 
 class TableContent(Content):
+    SplitFlag = "|"
+
     def __init__(self, data, translation=None):
         df = pd.DataFrame(data)
 
         # Verify if the number of rows and columns in the data and DataFrame object match
         if len(data) != len(df) or len(data[0]) != len(df.columns):
-            raise ValueError("The number of rows and columns in the extracted table data and DataFrame object do not match.")
-        
+            raise ValueError(
+                "The number of rows and columns in the extracted table data and DataFrame object do not match.")
+
         super().__init__(ContentType.TABLE, df)
+
+    def split_line(self, line):
+        """
+        Split the line by "|"
+        :param line: | 水果       | 颜色   | 价格 （美元） |
+        :return: ['|', ' 水果       ', '|', ' 价格 （美元） ', '|']
+        """
+        split_lines = line.split(self.SplitFlag)
+        ret = []
+        for item in split_lines[1:-1]:
+            ret.append(item)
+        return ret
 
     def set_translation(self, translation, status):
         try:
@@ -47,8 +65,13 @@ class TableContent(Content):
                 raise ValueError(f"Invalid translation type. Expected str, but got {type(translation)}")
 
             LOG.debug(translation)
-            # Convert the string to a list of lists
-            table_data = [row.strip().split() for row in translation.strip().split('\n')]
+
+            # 原样复原.需要根据"|"进行分隔
+            translation_lines = translation.strip().split('\n')
+            table_data = [self.split_line(line) for line in translation_lines]
+
+            # # Convert the string to a list of lists
+            # table_data = [row.strip().split() for row in translation.strip().split('\n')]
             LOG.debug(table_data)
             # Create a DataFrame from the table_data
             translated_df = pd.DataFrame(table_data[1:], columns=table_data[0])
@@ -56,6 +79,7 @@ class TableContent(Content):
             self.translation = translated_df
             self.status = status
         except Exception as e:
+            LOG.error(traceback.format_exc())
             LOG.error(f"An error occurred during table translation: {e}")
             self.translation = None
             self.status = False
