@@ -8,12 +8,6 @@ from utils import ArgumentParser, LOG
 from translator import PDFTranslator, TranslationConfig
 
 
-target_style_map = {
-    "童话故事": "fairy tale",
-    "新闻稿": "press release",
-    "杰出作家": "outstanding writer"
-}
-
 def translation(input_file, source_language, target_language, target_style):
     LOG.debug(f"[翻译任务]\n"
               f"源文件: {input_file.name}\n"
@@ -25,14 +19,13 @@ def translation(input_file, source_language, target_language, target_style):
         input_file.name,
         source_language=source_language,
         target_language=target_language,
-        target_style=target_style_map[target_style]
+        target_style=target_style
     )
     LOG.debug(f"[翻译结果] 文件位置:{output_file_path}\n")
     return output_file_path
 
 
 def launch_gradio():
-    global target_style_map
     iface = gr.Interface(
         fn=translation,
         title="OpenAI-Translator v2.0(PDF 电子书翻译工具)",
@@ -40,7 +33,7 @@ def launch_gradio():
             gr.File(label="上传PDF文件"),
             gr.Textbox(label="源语言（默认：英文）", placeholder="English", value="English"),
             gr.Textbox(label="目标语言（默认：中文）", placeholder="Chinese", value="Chinese"),
-            gr.Dropdown(label="翻译风格 (默认: 童话故事)", choices=target_style_map.keys(), value="童话故事"),
+            gr.Textbox(label="翻译风格 (默认: 童话)", placeholder="fairy tale", lvalue="fairy tale"),
         ],
         outputs=[
             gr.File(label="下载翻译文件")
