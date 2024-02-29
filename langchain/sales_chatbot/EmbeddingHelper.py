@@ -8,13 +8,8 @@ import os
 import ast
 from langchain_community.embeddings import OpenAIEmbeddings
 
-# 本文介绍了, 如何将知识库的csv文件, 转换为embedding向量.
-
 """
-数据包导入说明
-1. os: Python 标准库，提供了丰富的方法用于处理文件和目录。
-2. pandas: 一个用于数据处理和分析的 Python 库，提供了 DataFrame 数据结构，方便进行数据的读取、处理、分析等操作。
-3. tiktoken: OpenAI 开发的一个库，用于从模型生成的文本中计算 token 数量。
+本文介绍了, 如何将知识库的csv文件, 转换为embedding向量.并导出csv文件
 """
 
 
@@ -143,6 +138,11 @@ class ArgumentParser:
         return args
 
 
+def make_dir_if_not_exists(dir_path: str):
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
+
 if __name__ == '__main__':
     def test_embedding_by_origin_file():
         """
@@ -162,6 +162,7 @@ if __name__ == '__main__':
                                                   openai_embedding.embedding_text)
         # 5. 输出csv文件
         output_csv_path = "data/car_sales.csv"
+        make_dir_if_not_exists(os.path.dirname(output_csv_path))
         embedding_helper.output(output_csv_path)
         print(f"Embedding finished, output file: {output_csv_path}")
         print(embedding_helper.df.head(2))

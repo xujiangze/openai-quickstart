@@ -7,9 +7,8 @@ from langchain_core.documents import Document
 
 class FaissHelper(object):
     """
-    协助初始化Faiss
+    FaissHelper 协助初始化Faiss
     """
-
     def __init__(self):
         self.db: FAISS = None
         self.retriever = None
@@ -21,6 +20,13 @@ class FaissHelper(object):
             embeddings: OpenAIEmbeddings,
             score_threshold: float = 0.8
     ):
+        """
+        通过文本和embedding初始化Faiss
+        :param text_embedding_pairs:
+        :param embeddings:
+        :param score_threshold:
+        :return:
+        """
         self.db: FAISS = FAISS.from_embeddings(text_embedding_pairs, embeddings)
         self.retriever = self.db.as_retriever(
             search_type="similarity_score_threshold",
@@ -29,6 +35,11 @@ class FaissHelper(object):
         self.score_threshold: float = score_threshold
 
     def set_score_threshold(self, score_threshold: float):
+        """
+        设置相似度阈值
+        :param score_threshold:
+        :return:
+        """
         self.score_threshold = score_threshold
         self.retriever = self.db.as_retriever(
             search_type="similarity_score_threshold",
@@ -36,12 +47,29 @@ class FaissHelper(object):
         )
 
     def query(self, query: str) -> List[Document]:
+        """
+        查询
+        :param query:
+        :return:
+        """
         return self.retriever.get_relevant_documents(query)
 
     def save_to_local(self, dir_path: str):
+        """
+        保存到本地
+        :param dir_path:
+        :return:
+        """
         self.db.save_local(dir_path)
 
     def load_local(self, dir_path: str, embeddings: OpenAIEmbeddings, score_threshold: float):
+        """
+        从本地加载
+        :param dir_path:
+        :param embeddings:
+        :param score_threshold:
+        :return:
+        """
         self.db = FAISS.load_local(dir_path, embeddings)
         self.score_threshold = score_threshold
         self.retriever = self.db.as_retriever(
@@ -60,7 +88,7 @@ class ArgumentParser:
         self.parser.add_argument('--test_save', action='store_true',
                                  help='测试将已经保存的向量文件,转化为faiss保存到本地',
                                  default=False)
-        self.parser.add_argument('--save_dir', type=str, help='保存faiss文件的路径')
+        self.parser.add_argument('--faiss_dir', type=str, help='保存faiss文件的路径')
         self.parser.add_argument('--test_load', action='store_true',
                                  help='测试将本地的faiss文件加载到内存,并进行query测试',
                                  default=False)
@@ -107,13 +135,13 @@ if __name__ == '__main__':
         faiss.save_to_local(f"{save_dir}/faiss")
 
 
-    def test_load_local():
+    def test_load_local(faiss_dir):
         """
         测试加载本地Faiss文件,并进行测试
         :return:
         """
         from EmbeddingHelper import EmbeddingHelper
-        local_dir = "data/faiss"
+        local_dir = faiss_dir
         embeddings = OpenAIEmbeddings()
         faiss = FaissHelper()
         faiss.load_local(local_dir, embeddings, 0.8)
@@ -129,8 +157,8 @@ if __name__ == '__main__':
     if args.test_query:
         test_query()
     if args.test_save:
-        test_save_local(args.save_dir)
+        test_save_local(args.faiss_dir)
     if args.test_load:
-        test_load_local()
+        test_load_local(args.faiss_dir)
 
     # 测试问题: 电池续航能力如何

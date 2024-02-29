@@ -6,8 +6,6 @@ from langchain.chains import RetrievalQA
 from langchain.chat_models import ChatOpenAI
 from FaissHelper import FaissHelper
 
-assistant = None
-
 
 class AIAssistant(object):
     # SUPPORTED_ASSISTANT_TYPE_PROPERTY = "房产销售"
@@ -30,6 +28,10 @@ class AIAssistant(object):
         bot.return_source_documents = True
 
         return bot
+
+
+# 定义全局小助理
+assistant: AIAssistant
 
 
 def sales_chat(message, history):
@@ -58,7 +60,7 @@ def init_sales_bot(faiss_dir: str):
 class ArgumentParser:
     def __init__(self):
         self.parser = argparse.ArgumentParser(
-            description='客服小助理')
+            description='小助理')
         self.parser.add_argument('--faiss_dir', type=str, help='保存faiss文件的目录路径')
 
     def parse_arguments(self):
@@ -71,7 +73,7 @@ class ArgumentParser:
 def launch_gradio():
     demo = gr.ChatInterface(
         fn=sales_chat,
-        title="客服小助理",
+        title="小助理",
         # retry_btn=None,
         # undo_btn=None,
         chatbot=gr.Chatbot(height=600),
